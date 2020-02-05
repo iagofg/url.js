@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<script type="text/javascript" src="..\src\hash.js"></script>
+		<script type="text/javascript"><!--
+			
+			function getPageName(page) {
+				return page == "" ? "home" : page;
+			}
+			
+			var lastPage = "";
+			$hash.onexit("*", function(page) {
+				document.getElementById("content").innerHTML = "Closing page... " + getPageName(page);
+				lastPage = page;
+				console.log("exit [1] -> \"" + getPageName(page) + "\"");
+			});
+			$hash.onenter("*", function(page) {
+				document.getElementById("content").innerHTML = "Entering page... " + getPageName(page);
+				console.log("enter [2] -> \"" + getPageName(page) + "\"");
+			});
+			$hash.onready("*", function(page) {
+				document.getElementById("content").innerHTML = "Page ready.<br>Current section <a href='javascript:$hash.replace('#" + page + "')'>" + getPageName(page) + "</a>.<br>Previous visited section <a href='javascript:$hash.replace(\"#" + lastPage + "\")'>" + getPageName(lastPage) + "</a>.";
+				console.log("ready [3] -> \"" + getPageName(page) + "\"");
+			});
+		
+			console.log("begin");
+			
+		//--></script>
+	</head>
+	<body>
+		<div id="navmenu">
+			<a href="javascript:$hash.back()">&lt;</a> | 
+			<a href="javascript:$hash.go('#')">Home</a> | 
+			<a href="javascript:$hash.go('#products')">Products</a> | 
+			<a href="javascript:$hash.go('#contact')">Contact</a>
+		</div>
+		<div id="content">
+			
+		</div>
+	</body>
+</html>
