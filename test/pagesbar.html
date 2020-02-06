@@ -20,7 +20,9 @@
 				console.log("enter [2] -> \"" + getPageName(page) + "\"");
 			});
 			$hash.onready("*", function(page) {
-				document.getElementById("content").innerHTML = "Page ready.<br>Current section <a href='javascript:$hash.replace('#" + page + "')'>" + getPageName(page) + "</a>.<br>Previous visited section <a href='javascript:$hash.replace(\"#" + lastPage + "\")'>" + getPageName(lastPage) + "</a>.";
+				console.log("lastPage = [", lastPage, "]");
+				console.log("page = [", page, "]");
+				document.getElementById("content").innerHTML = "Page ready.<br>Current section <a href=\"javascript:$hash.replace('#" + page + "')\">" + getPageName(page) + "</a>.<br>Previous visited section <a href=\"javascript:$hash.replace('#" + lastPage + "')\">" + getPageName(lastPage) + "</a>.";
 				console.log("ready [3] -> \"" + getPageName(page) + "\"");
 			});
 		
