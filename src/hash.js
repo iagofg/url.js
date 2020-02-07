@@ -9,6 +9,9 @@
 	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY = 1;
 	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY_WAIT_TIME = 500;
 	var HASHJS_BEHAVIOUR_ONCANCEL_RETURN = 2;
+	var HASHJS_BEHAVIOUR_CANNOT_DELAY = 3;
+	var HASHJS_ONBEFOREUNLOAD_RETURNVALUE = "Changes will be lost";
+	var HASHJS_ONBEFOREUNLOAD_RETURN = HASHJS_ONBEFOREUNLOAD_RETURNVALUE;
 	var $hash = {};
 	var _exit_handlers = {};
 	var _enter_handlers = {};
@@ -56,19 +59,23 @@
 	}
 	$hash.replace = replace;
 
-	function _call_handler(handler, hash, cb) {
+	function _call_handler(handler, hash, behaviour, cb) {
 		if (typeof handler == "function") {
 			var allowed_delayed_call_handler = true;
-			var local_delayed_call_handler = function(retv) {
-				if (allowed_delayed_call_handler) {
-					allowed_delayed_call_handler = false; // cb can be only called 1 time
-					if (typeof cb == "function") cb(retv);
+			var local_delayed_call_handler = null;
+			if (behaviour !== HASHJS_BEHAVIOUR_CANNOT_DELAY) {
+				local_delayed_call_handler = function(retv) {
+					if (allowed_delayed_call_handler) {
+						allowed_delayed_call_handler = false; // cb can be only called 1 time
+						if (typeof cb == "function") cb(retv);
+					}
 				}
 			}
 			var retv = handler(hash, local_delayed_call_handler);
-			if (retv === local_delayed_call_handler) {
+			if (behaviour !== HASHJS_BEHAVIOUR_CANNOT_DELAY && retv === local_delayed_call_handler) {
 				// wait for local_delayed_call_handler call
-			} else { // if ((retv === true) || (retv === false)) {
+			} else { // retv === true || false
+				//console.log("_call_handler non delayed cb, allowed_delayed_call_handler = ", allowed_delayed_call_handler);
 				if (allowed_delayed_call_handler) {
 					allowed_delayed_call_handler = false; // cb can be only called 1 time
 					if (typeof cb == "function") cb(retv);
@@ -80,13 +87,13 @@
 	function _call_handlers(handlers, hash, i, behaviour, cb) {
 		if (hash in handlers) {
 			if (i < handlers[hash].length) {
-				_call_handler(handlers[hash][i], hash, function(retv) {
+				_call_handler(handlers[hash][i], hash, behaviour, function(retv) {
 					if (retv === false) {
 						if (behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETRY) {
 							setTimeout(function() {
 								_call_handlers(handlers, hash, i, behaviour, cb);
 							}, HASHJS_BEHAVIOUR_ONCANCEL_RETRY_TIME);
-						} else { // if (behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETURN) {
+						} else { // behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETURN || HASHJS_BEHAVIOUR_CANNOT_DELAY
 							if (typeof cb == "function") cb(false, hash);
 						}
 					} else {
@@ -107,13 +114,13 @@
 	function _call_handlers_step2(handlers, hash, i, behaviour, cb) {
 		if (HASHJS_WILDCARD in handlers) {
 			if (i < handlers[HASHJS_WILDCARD].length) {
-				_call_handler(handlers[HASHJS_WILDCARD][i], hash, function(retv) {
+				_call_handler(handlers[HASHJS_WILDCARD][i], hash, behaviour, function(retv) {
 					if (retv === false) {
 						if (behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETRY) {
 							setTimeout(function() {
 								_call_handlers(handlers, hash, i, behaviour, cb);
 							}, HASHJS_BEHAVIOUR_ONCANCEL_RETRY_TIME);
-						} else { // if (behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETURN) {
+						} else { // behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETURN || HASHJS_BEHAVIOUR_CANNOT_DELAY
 							if (typeof cb == "function") cb(false, hash);
 						}
 					} else {
@@ -147,10 +154,12 @@
 	}
 	function _change_hash_step2(previous_filtered_hash, next_filtered_hash, cb) {
 		_call_handlers(_enter_handlers, next_filtered_hash, 0, HASHJS_BEHAVIOUR_ONCANCEL_RETURN, function(retv, next_filtered_hash) {
+			//console.log("_change_hash_step2", retv);
 			if (retv === false) {
 				if (typeof cb == "function") cb(retv, previous_filtered_hash, next_filtered_hash);
 			} else {
 				_call_handlers(_ready_handlers, next_filtered_hash, 0, HASHJS_BEHAVIOUR_ONCANCEL_RETRY, function(retv, next_filtered_hash) {
+					//console.log("_change_hash_step2", retv);
 					if (typeof cb == "function") cb(retv, previous_filtered_hash, next_filtered_hash);
 				});
 			}
@@ -162,32 +171,27 @@
 	}
 	function onbeforeunload(e) {
 		console.log("onbeforeunload", e);
-		//var querystring = "";
-		//var querystring = "Esto es una prueba";
-		//var querystring = false;
-		//console.log("onbeforeunload", e);
-		//e.preventDefault(); // cancel the event
-		//e.returnValue = querystring; // chrome requires returnValue to be set
-		//e.returnValue = '[1] You have made changes on this page that you have not yet confirmed. If you navigate away from this page you will lose your unsaved changes';
-		//return "[2] You have made changes on this page that you have not yet confirmed. If you navigate away from this page you will lose your unsaved changes";
-		//event.returnValue = null; //"Any text"; //true; //false;
-		//return null; //"Any text"; //true; //false;
-		//return querystring;
-		
 		var askforconfirmation = false;
+		//console.log("onbeforeunload _previous_hash = ", _previous_hash);
+		if (_previous_hash !== null) {
+			_call_handlers(_exit_handlers, _filter_hash(_previous_hash), 0, HASHJS_BEHAVIOUR_CANNOT_DELAY, function(retv, previous_filtered_hash) {
+				if (retv === false) {
+					askforconfirmation = true;
+				}
+			});
+		}
 		if (askforconfirmation) {
-			e['returnValue'] = true;
-			return "SE PIERDEN CAMBIOS";
+			e['returnValue'] = HASHJS_ONBEFOREUNLOAD_RETURNVALUE;
+			return HASHJS_ONBEFOREUNLOAD_RETURN;
 		} else {
 			delete e['returnValue'];
 		}
-		
 	}
 	function onunload(e) {
 		console.log("onunload", e);
 	}
 	function onhashchange(e) {
-		console.log("onhashchange", e);
+		console.log("onhashchange", window.location.hash, e);
 		var location_hash = window.location.hash;
 		_change_hash(_previous_hash, location_hash);
 		_previous_hash = location_hash;
