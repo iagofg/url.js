@@ -9,15 +9,28 @@
 				return page == "" ? "home" : page;
 			}
 			
+			var confirmdielog_cb = null;
+			function confirmdielog(yes) {
+				document.getElementById("dialog").innerHTML = "";
+				if (confirmdielog_cb) confirmdielog_cb(yes ? true : false);
+				confirmdielog_cb = null;
+			}
+			
 			var lastPage = "";
 			$hash.onexit("*", function(page, delayedcb) {
 				var unsaved = document.getElementById("unsaved");
 				document.getElementById("status").innerHTML = "Closing page... " + getPageName(page);
 				lastPage = page;
 				console.log("exit [1] -> \"" + getPageName(page) + "\"");
+				//if (page == "products" && unsaved && unsaved.checked == true) {
 				if (unsaved && unsaved.checked == true) {
 					if (delayedcb) {
 						console.log("exit [1b] UNSAVED");
+						confirmdielog_cb = delayedcb;
+						//document.getElementById("dialog").innerHTML = "Please confirm exit without saving changes <a href='javascript:confirmdielog(true)'>Yes</a> or <a href='javascript:confirmdielog(false)'>No</a>";
+						//setTimeout(function() {
+						//	delayedcb(false);
+						//}, 1500);
 						return false;
 					} else { // cannot delay callback, this means that onbeforerun happened, so we can simply report/ask the browser to show the confirmation before exit dialog
 						console.log("exit [1] UNSAVED");
@@ -30,7 +43,7 @@
 				console.log("enter [2] -> \"" + getPageName(page) + "\"");
 				var unsaved = "";
 				if (page == "products") {
-					unsaved = "<br><br><label><input type='checkbox' id='unsaved' checked> Cambios sin guardar.</label>";
+					unsaved = "<br><br><label><input type='checkbox' id='unsaved' checked> Unsaved changes in this page.</label>";
 				}
 				document.getElementById("content").innerHTML = "Section " + getPageName(page) + " page contents rendered @" + new Date().getTime() + unsaved;
 				document.getElementById("content").style.padding = "1em";

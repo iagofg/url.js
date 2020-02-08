@@ -12,7 +12,7 @@
 	var HASHJS_BEHAVIOUR_CANNOT_DELAY = 3;
 	var HASHJS_ONBEFOREUNLOAD_RETURNVALUE = "Changes will be lost";
 	var HASHJS_ONBEFOREUNLOAD_RETURN = HASHJS_ONBEFOREUNLOAD_RETURNVALUE;
-	var HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION = 333;
+	var HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION = 33;
 	var HASHJS_LAST_URLCHANGE_TYPE_NONE = 0;
 	var HASHJS_LAST_URLCHANGE_TYPE_GO = 1;
 	var HASHJS_LAST_URLCHANGE_TYPE_BACK = 2;
@@ -22,8 +22,8 @@
 	var _enter_handlers = {};
 	var _ready_handlers = {};
 	var _emuinterval = null;
-	var _urlchange_ignorecount = 0;
-	var _urlchange_ignorecount_timestamp = 0;
+	var _cancel_urlchange_url = null;
+	var _cancel_urlchange_until = 0;
 	var _urlchange_timestamp = 0;
 	var _urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_NONE;
 	var _nonull_previous_hash = null;
@@ -53,38 +53,29 @@
 	}
 	$hash.onready = onready;
 	
-	function go(url, optional_trigger_events) {
-		if (optional_trigger_events) {
-			_urlchange_ignorecount += 1;
-			_urlchange_ignorecount_timestamp = new Date().getTime();
-		}
+	function go(url) {
+		console.log("go(", url, ")");
 		window.location = url;
 		_urlchange_timestamp = new Date().getTime();
 		_urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_GO;
 	}
 	$hash.go = go;
 
-	function back(ammount, optional_trigger_events) {
-		if (optional_trigger_events) {
-			_urlchange_ignorecount += 1;
-			_urlchange_ignorecount_timestamp = new Date().getTime();
-		}
+	function back(ammount) {
+		console.log("back(", ammount, ")");
 		window.history.back(ammount);
 		_urlchange_timestamp = new Date().getTime();
 		_urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_BACK;
 	}
 	$hash.back = back;
 
-	function replace(url, optional_trigger_events) {
-		if (optional_trigger_events) _urlchange_ignorecount_timestamp = new Date().getTime();
+	function replace(url) {
+		console.log("replace(", url, ")");
 		if (window.history.replaceState) {
-			if (optional_trigger_events) _urlchange_ignorecount += 1;
 			window.history.replaceState(undefined, undefined, url);
 		} else if (window.location.replace) {
-			if (optional_trigger_events) _urlchange_ignorecount += 1;
 			window.location.replace(url);
 		} else {
-			if (optional_trigger_events) _urlchange_ignorecount += 2;
 			back(-1);
 			go(url);
 		}
@@ -94,19 +85,27 @@
 	$hash.replace = replace;
 
 	function _cancel_urlchange() {
+		console.log("_cancel_urlchange");
 		var timestamp = new Date().getTime();
-		if (_urlchange_timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION > timestamp) {
-			switch (_urlchange_type) {
-			case HASHJS_LAST_URLCHANGE_TYPE_GO:
-				back(-1);
-				break;
-			case HASHJS_LAST_URLCHANGE_TYPE_BACK:
-				if (_nonull_previous_hash != null) go(_nonull_previous_hash);
-				break;
-			case HASHJS_LAST_URLCHANGE_TYPE_REPLACE:
-				if (_nonull_previous_hash != null) replace(_nonull_previous_hash);
-				break;
+		if (timestamp > _cancel_urlchange_until) { // only one cancelation can be executed at once
+			//console.log("_cancel_urlchange");
+			if (_urlchange_timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION > timestamp) {
+				_cancel_urlchange_until = timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION;
+				switch (_urlchange_type) {
+				case HASHJS_LAST_URLCHANGE_TYPE_GO:
+					back(-1);
+					_cancel_urlchange_url = _nonull_previous_hash;
+					break;
+				case HASHJS_LAST_URLCHANGE_TYPE_BACK:
+					if (_nonull_previous_hash != null) go(_cancel_urlchange_url = _nonull_previous_hash);
+					break;
+				case HASHJS_LAST_URLCHANGE_TYPE_REPLACE:
+					if (_nonull_previous_hash != null) replace(_cancel_urlchange_url = _nonull_previous_hash);
+					break;
+				}
 			}
+		} else {
+			console.warn("Cannot nest two url cancelation processes.");
 		}
 	}
 
@@ -248,15 +247,9 @@
 		console.log("onhashchange", window.location.hash, e);
 		var location_hash = window.location.hash;
 		var timestamp = new Date().getTime();
-		if (_urlchange_ignorecount_timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION < timestamp) {
-			if (_urlchange_ignorecount <= 0) {
-				_change_hash(_previous_hash, location_hash);
-			} else {
-				--_urlchange_ignorecount;
-			}
-		} else {
-			_urlchange_ignorecount = 0;
-			//_urlchange_ignorecount_timestamp = 0;
+		//if ((timestamp > _cancel_urlchange_until) || (_cancel_urlchange_url == location_hash)) {
+		if (timestamp > _cancel_urlchange_until) {
+			_change_hash(_previous_hash, location_hash);
 		}
 		_nonull_previous_hash = _previous_hash = location_hash;
 	}
