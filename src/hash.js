@@ -7,16 +7,26 @@
 	var HASHJS_WILDCARD = "*";
 	var HASHJS_WILDCARD_ONLY_IF_NOT_HANDLER = false;
 	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY = 1;
-	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY_WAIT_TIME = 500;
+	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY_WAIT_TIME = 333;
 	var HASHJS_BEHAVIOUR_ONCANCEL_RETURN = 2;
 	var HASHJS_BEHAVIOUR_CANNOT_DELAY = 3;
 	var HASHJS_ONBEFOREUNLOAD_RETURNVALUE = "Changes will be lost";
 	var HASHJS_ONBEFOREUNLOAD_RETURN = HASHJS_ONBEFOREUNLOAD_RETURNVALUE;
+	var HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION = 333;
+	var HASHJS_LAST_URLCHANGE_TYPE_NONE = 0;
+	var HASHJS_LAST_URLCHANGE_TYPE_GO = 1;
+	var HASHJS_LAST_URLCHANGE_TYPE_BACK = 2;
+	var HASHJS_LAST_URLCHANGE_TYPE_REPLACE = 3;
 	var $hash = {};
 	var _exit_handlers = {};
 	var _enter_handlers = {};
 	var _ready_handlers = {};
 	var _emuinterval = null;
+	var _urlchange_ignorecount = 0;
+	var _urlchange_ignorecount_timestamp = 0;
+	var _urlchange_timestamp = 0;
+	var _urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_NONE;
+	var _nonull_previous_hash = null;
 	var _previous_hash = null;
 	var _previous_hash_triggered_exit = false;
 	
@@ -43,41 +53,84 @@
 	}
 	$hash.onready = onready;
 	
-	function go(url) {
+	function go(url, optional_trigger_events) {
+		if (optional_trigger_events) {
+			_urlchange_ignorecount += 1;
+			_urlchange_ignorecount_timestamp = new Date().getTime();
+		}
 		window.location = url;
+		_urlchange_timestamp = new Date().getTime();
+		_urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_GO;
 	}
 	$hash.go = go;
 
-	function back(ammount) {
+	function back(ammount, optional_trigger_events) {
+		if (optional_trigger_events) {
+			_urlchange_ignorecount += 1;
+			_urlchange_ignorecount_timestamp = new Date().getTime();
+		}
 		window.history.back(ammount);
+		_urlchange_timestamp = new Date().getTime();
+		_urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_BACK;
 	}
 	$hash.back = back;
 
-	function replace(url) {
-		back(-1);
-		go(url);
+	function replace(url, optional_trigger_events) {
+		if (optional_trigger_events) _urlchange_ignorecount_timestamp = new Date().getTime();
+		if (window.history.replaceState) {
+			if (optional_trigger_events) _urlchange_ignorecount += 1;
+			window.history.replaceState(undefined, undefined, url);
+		} else if (window.location.replace) {
+			if (optional_trigger_events) _urlchange_ignorecount += 1;
+			window.location.replace(url);
+		} else {
+			if (optional_trigger_events) _urlchange_ignorecount += 2;
+			back(-1);
+			go(url);
+		}
+		_urlchange_timestamp = new Date().getTime();
+		_urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_REPLACE;
 	}
 	$hash.replace = replace;
+
+	function _cancel_urlchange() {
+		var timestamp = new Date().getTime();
+		if (_urlchange_timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION > timestamp) {
+			switch (_urlchange_type) {
+			case HASHJS_LAST_URLCHANGE_TYPE_GO:
+				back(-1);
+				break;
+			case HASHJS_LAST_URLCHANGE_TYPE_BACK:
+				if (_nonull_previous_hash != null) go(_nonull_previous_hash);
+				break;
+			case HASHJS_LAST_URLCHANGE_TYPE_REPLACE:
+				if (_nonull_previous_hash != null) replace(_nonull_previous_hash);
+				break;
+			}
+		}
+	}
 
 	function _call_handler(handler, hash, behaviour, cb) {
 		if (typeof handler == "function") {
 			var allowed_delayed_call_handler = true;
 			var local_delayed_call_handler = null;
 			if (behaviour !== HASHJS_BEHAVIOUR_CANNOT_DELAY) {
-				local_delayed_call_handler = function(retv) {
+				local_delayed_call_handler = function(retv) { // this 
 					if (allowed_delayed_call_handler) {
 						allowed_delayed_call_handler = false; // cb can be only called 1 time
+						if (retv === false) _cancel_urlchange();
 						if (typeof cb == "function") cb(retv);
 					}
 				}
 			}
 			var retv = handler(hash, local_delayed_call_handler);
 			if (behaviour !== HASHJS_BEHAVIOUR_CANNOT_DELAY && retv === local_delayed_call_handler) {
-				// wait for local_delayed_call_handler call
+				// do nothing, wait for local_delayed_call_handler call, if invoker does not call local_delayed_call_handler then process will not continue for this jump
 			} else { // retv === true || false
 				//console.log("_call_handler non delayed cb, allowed_delayed_call_handler = ", allowed_delayed_call_handler);
 				if (allowed_delayed_call_handler) {
 					allowed_delayed_call_handler = false; // cb can be only called 1 time
+					if (retv === false) _cancel_urlchange();
 					if (typeof cb == "function") cb(retv);
 				}
 			}
@@ -186,6 +239,7 @@
 		} else {
 			delete e['returnValue'];
 		}
+		//_previous_hash = null;
 	}
 	function onunload(e) {
 		console.log("onunload", e);
@@ -193,8 +247,18 @@
 	function onhashchange(e) {
 		console.log("onhashchange", window.location.hash, e);
 		var location_hash = window.location.hash;
-		_change_hash(_previous_hash, location_hash);
-		_previous_hash = location_hash;
+		var timestamp = new Date().getTime();
+		if (_urlchange_ignorecount_timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION < timestamp) {
+			if (_urlchange_ignorecount <= 0) {
+				_change_hash(_previous_hash, location_hash);
+			} else {
+				--_urlchange_ignorecount;
+			}
+		} else {
+			_urlchange_ignorecount = 0;
+			//_urlchange_ignorecount_timestamp = 0;
+		}
+		_nonull_previous_hash = _previous_hash = location_hash;
 	}
 	function emu_onhashchange() {
 		var location_hash = window.location.hash;

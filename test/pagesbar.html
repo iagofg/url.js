@@ -10,19 +10,37 @@
 			}
 			
 			var lastPage = "";
-			$hash.onexit("*", function(page) {
-				document.getElementById("content").innerHTML = "Closing page... " + getPageName(page);
+			$hash.onexit("*", function(page, delayedcb) {
+				var unsaved = document.getElementById("unsaved");
+				document.getElementById("status").innerHTML = "Closing page... " + getPageName(page);
 				lastPage = page;
 				console.log("exit [1] -> \"" + getPageName(page) + "\"");
+				if (unsaved && unsaved.checked == true) {
+					if (delayedcb) {
+						console.log("exit [1b] UNSAVED");
+						return false;
+					} else { // cannot delay callback, this means that onbeforerun happened, so we can simply report/ask the browser to show the confirmation before exit dialog
+						console.log("exit [1] UNSAVED");
+						return false;
+					}
+				}
 			});
-			$hash.onenter("*", function(page) {
-				document.getElementById("content").innerHTML = "Entering page... " + getPageName(page);
+			$hash.onenter("*", function(page, delayedcb) {
+				document.getElementById("status").innerHTML = "Entering page... " + getPageName(page);
 				console.log("enter [2] -> \"" + getPageName(page) + "\"");
+				var unsaved = "";
+				if (page == "products") {
+					unsaved = "<br><br><label><input type='checkbox' id='unsaved' checked> Cambios sin guardar.</label>";
+				}
+				document.getElementById("content").innerHTML = "Section " + getPageName(page) + " page contents rendered @" + new Date().getTime() + unsaved;
+				document.getElementById("content").style.padding = "1em";
+				document.getElementById("content").style.margin = "1em";
+				document.getElementById("content").style.background = "lightgreen";
 			});
-			$hash.onready("*", function(page) {
+			$hash.onready("*", function(page, delayedcb) {
 				console.log("lastPage = [", lastPage, "]");
 				console.log("page = [", page, "]");
-				document.getElementById("content").innerHTML = "Page ready.<br>Current section <a href=\"javascript:$hash.replace('#" + page + "')\">" + getPageName(page) + "</a>.<br>Previous visited section <a href=\"javascript:$hash.replace('#" + lastPage + "')\">" + getPageName(lastPage) + "</a>.";
+				document.getElementById("status").innerHTML = "Page ready.<br>Current section <a href=\"javascript:$hash.replace('#" + page + "')\">" + getPageName(page) + "</a>.<br>Previous visited section <a href=\"javascript:$hash.replace('#" + lastPage + "')\">" + getPageName(lastPage) + "</a>.";
 				console.log("ready [3] -> \"" + getPageName(page) + "\"");
 			});
 		
@@ -38,6 +56,12 @@
 			<a href="javascript:$hash.go('#contact')">Contact</a>
 		</div>
 		<div id="content">
+			
+		</div>
+		<div id="dialog">
+			
+		</div>
+		<div id="status">
 			
 		</div>
 	</body>
