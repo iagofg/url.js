@@ -106,8 +106,20 @@
 					break;
 				}
 			} else { // url change done with a href or browser/device button
+				_cancel_urlchange_until = timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION;
 				var history_len = (window.history && window.history.length > 0) ? window.history.length : 0;
 				console.log("history_len", history_len, "; _previous_history_length", _previous_history_length);
+				if (history_len > _previous_history_length) { // last navigation was forward
+					back(-1);
+					if (_nonull_previous_hash != null) replace(_cancel_urlchange_url = _nonull_previous_hash);
+					_cancel_urlchange_url = _nonull_previous_hash;
+					_previous_history_length = (window.history && window.history.length > 0) ? window.history.length : 0;
+				} else { // we cannot be sure if last navigation was forward, replace or backward, so assume backward
+					if (_nonull_previous_hash != null) {
+						go(_cancel_urlchange_url = _nonull_previous_hash);
+						_previous_history_length = (window.history && window.history.length > 0) ? window.history.length : 0;
+					}
+				}
 			}
 		} else {
 			console.warn("Cannot nest two url cancelation processes.");
@@ -256,7 +268,6 @@
 		if (timestamp > _cancel_urlchange_until) {
 			_change_hash(_previous_hash, location_hash);
 			_previous_history_length = (window.history && window.history.length > 0) ? window.history.length : 0;
-			// https://stackoverflow.com/questions/32017791/how-to-find-the-current-location-index-in-the-browser-history#32019654
 		}
 		_nonull_previous_hash = _previous_hash = location_hash;
 	}
