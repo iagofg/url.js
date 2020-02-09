@@ -26,7 +26,8 @@
 	var _cancel_urlchange_until = 0;
 	var _urlchange_timestamp = 0;
 	var _urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_NONE;
-	var _nonull_previous_hash = null;
+	var _previous_history_length = 0;
+	var _nonull_previous_hash = null; // finally this seems redudant as long as _previous_hash is not set to null
 	var _previous_hash = null;
 	var _previous_hash_triggered_exit = false;
 	
@@ -85,12 +86,13 @@
 	$hash.replace = replace;
 
 	function _cancel_urlchange() {
-		console.log("_cancel_urlchange");
+		console.log("_cancel_urlchange [1]");
 		var timestamp = new Date().getTime();
 		if (timestamp > _cancel_urlchange_until) { // only one cancelation can be executed at once
-			//console.log("_cancel_urlchange");
-			if (_urlchange_timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION > timestamp) {
+			console.log("_cancel_urlchange [2]");
+			if (_urlchange_timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION > timestamp) { // url change done with go/back/replace methods
 				_cancel_urlchange_until = timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION;
+				console.log("_cancel_urlchange [3] (" + _urlchange_type + ")");
 				switch (_urlchange_type) {
 				case HASHJS_LAST_URLCHANGE_TYPE_GO:
 					back(-1);
@@ -103,6 +105,9 @@
 					if (_nonull_previous_hash != null) replace(_cancel_urlchange_url = _nonull_previous_hash);
 					break;
 				}
+			} else { // url change done with a href or browser/device button
+				var history_len = (window.history && window.history.length > 0) ? window.history.length : 0;
+				console.log("history_len", history_len, "; _previous_history_length", _previous_history_length);
 			}
 		} else {
 			console.warn("Cannot nest two url cancelation processes.");
@@ -250,6 +255,8 @@
 		//if ((timestamp > _cancel_urlchange_until) || (_cancel_urlchange_url == location_hash)) {
 		if (timestamp > _cancel_urlchange_until) {
 			_change_hash(_previous_hash, location_hash);
+			_previous_history_length = (window.history && window.history.length > 0) ? window.history.length : 0;
+			// https://stackoverflow.com/questions/32017791/how-to-find-the-current-location-index-in-the-browser-history#32019654
 		}
 		_nonull_previous_hash = _previous_hash = location_hash;
 	}
