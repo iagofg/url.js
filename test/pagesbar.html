@@ -59,22 +59,34 @@
 		
 			console.log("begin");
 			
+			setInterval(function() {
+				var test = document.getElementById("test");
+				if (test) test.innerHTML = JSON.stringify($hash.status());
+			}, 333);
+			
 		//--></script>
 	</head>
 	<body>
-		<div id="navmenu">
-			GO/BACK
+		<div id="navmenu1">
 			<a href="javascript:$hash.back()">&lt;</a> | 
 			<a href="javascript:$hash.go('#')">Home</a> | 
 			<a href="javascript:$hash.go('#products')">Products</a> | 
 			<a href="javascript:$hash.go('#contact')">Contact</a>
+			(go)
 		</div>
 		<div id="navmenu2">
-			A HREF
+			<a href="javascript:$hash.back()">&lt;</a> | 
+			<a href="javascript:$hash.replace('#')">Home</a> | 
+			<a href="javascript:$hash.replace('#products')">Products</a> | 
+			<a href="javascript:$hash.replace('#contact')">Contact</a>
+			(replace)
+		</div>
+		<div id="navmenu3">
 			<a href="javascript:history.back()">&lt;</a> | 
 			<a href="#">Home</a> | 
 			<a href="#products">Products</a> | 
 			<a href="#contact">Contact</a>
+			(a href)
 		</div>
 		<div id="content">
 			
@@ -83,6 +95,9 @@
 			
 		</div>
 		<div id="status">
+			
+		</div>
+		<div id="test">
 			
 		</div>
 	</body>

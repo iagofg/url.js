@@ -6,6 +6,7 @@
 	var HASHJS_EMULATION_MS = 333;
 	var HASHJS_WILDCARD = "*";
 	var HASHJS_WILDCARD_ONLY_IF_NOT_HANDLER = false;
+	var HASHJS_CANCEL_HISTORY_TRICK = true;
 	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY = 1;
 	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY_WAIT_TIME = 333;
 	var HASHJS_BEHAVIOUR_ONCANCEL_RETURN = 2;
@@ -27,10 +28,22 @@
 	var _urlchange_timestamp = 0;
 	var _urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_NONE;
 	var _previous_history_length = 0;
+	var _update_previous_history_length = true;
 	var _nonull_previous_hash = null; // finally this seems redudant as long as _previous_hash is not set to null
 	var _previous_hash = null;
 	var _previous_hash_triggered_exit = false;
 	
+	function _get_history_len() {
+		return (window.history && window.history.length > 0) ? window.history.length : 0;
+	}
+	
+	function status() {
+		return {
+			history_len: _get_history_len(),
+			previous_history_len: _previous_history_length,
+		};
+	}
+	$hash.status = status;
 	
 	function _add_handler(handlers, hash, callback) {
 		if (!(hash in handlers)) {
@@ -107,19 +120,52 @@
 				}
 			} else { // url change done with a href or browser/device button
 				_cancel_urlchange_until = timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION;
-				var history_len = (window.history && window.history.length > 0) ? window.history.length : 0;
+				var history_len = _get_history_len();
 				console.log("history_len", history_len, "; _previous_history_length", _previous_history_length);
+				
+				/*
+				if (history_len > _previous_history_length) { // last navigation was forward
+					console.log("~~~~~~~~~ _cancel_urlchange [2 A ]");
+					back(-1);
+					if (_nonull_previous_hash != null) replace(_cancel_urlchange_url = _nonull_previous_hash);
+					if (HASHJS_CANCEL_HISTORY_TRICK) {
+						go(_nonull_previous_hash);
+						back(-1);
+					}
+				} else { // we cannot be sure if last navigation was forward, replace or backward, so assume backward
+					console.log("~~~~~~~~~ _cancel_urlchange [2 B ]");
+				}
+				*/
+				/* */
+				if (history_len > _previous_history_length) { // last navigation was forward
+					console.log("~~~~~~~~~ _cancel_urlchange [2 A ]");
+					//_previous_history_length = _get_history_len();
+					back(-1);
+					_update_previous_history_length = false;
+					if (_nonull_previous_hash != null) replace(_cancel_urlchange_url = _nonull_previous_hash);
+					_cancel_urlchange_url = _nonull_previous_hash;
+					//_previous_history_length = _get_history_len();
+				} else { // we cannot be sure if last navigation was forward, replace or backward, so assume backward
+					console.log("~~~~~~~~~ _cancel_urlchange [2 B ]");
+					if (_nonull_previous_hash != null) {
+						go(_cancel_urlchange_url = _nonull_previous_hash);
+						//_previous_history_length = _get_history_len();
+					}
+				}
+				/* */
+				/*
 				if (history_len > _previous_history_length) { // last navigation was forward
 					back(-1);
 					if (_nonull_previous_hash != null) replace(_cancel_urlchange_url = _nonull_previous_hash);
 					_cancel_urlchange_url = _nonull_previous_hash;
-					_previous_history_length = (window.history && window.history.length > 0) ? window.history.length : 0;
+					_previous_history_length = _get_history_len();
 				} else { // we cannot be sure if last navigation was forward, replace or backward, so assume backward
 					if (_nonull_previous_hash != null) {
 						go(_cancel_urlchange_url = _nonull_previous_hash);
-						_previous_history_length = (window.history && window.history.length > 0) ? window.history.length : 0;
+						_previous_history_length = _get_history_len();
 					}
 				}
+				*/
 			}
 		} else {
 			console.warn("Cannot nest two url cancelation processes.");
@@ -266,8 +312,10 @@
 		var timestamp = new Date().getTime();
 		//if ((timestamp > _cancel_urlchange_until) || (_cancel_urlchange_url == location_hash)) {
 		if (timestamp > _cancel_urlchange_until) {
+			_update_previous_history_length = true;
+			var previous_history_length = _get_history_len();
 			_change_hash(_previous_hash, location_hash);
-			_previous_history_length = (window.history && window.history.length > 0) ? window.history.length : 0;
+			if (_update_previous_history_length) _previous_history_length = previous_history_length;
 		}
 		_nonull_previous_hash = _previous_hash = location_hash;
 	}
