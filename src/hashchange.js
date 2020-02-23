@@ -1,4 +1,4 @@
-/// hash.js
+/// hashchange.js
 /// light-weight javascript library for managing and cancelling url pages hashchanges events
 /// @site http://iagofg.com/hash.js
 /// @author info@iagofg.com
