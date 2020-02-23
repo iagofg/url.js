@@ -1,5 +1,9 @@
-// hash.js
-
+/// hash.js
+/// light-weight javascript library for managing and cancelling url pages hashchanges events
+/// @site http://iagofg.com/hash.js
+/// @author info@iagofg.com
+/// @license LGPL2
+"use strict";
 (function() {
 	var HASHJS_DEBUG = true;
 	if (HASHJS_DEBUG) console.log("hash.js: libstatus init begin");
