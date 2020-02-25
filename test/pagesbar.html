@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8" />
-		<script type="text/javascript" src="..\src\hashchange.js"></script>
+		<script type="text/javascript" src="..\src\url.js"></script>
 		<script type="text/javascript"><!--
 			
 			function getPageName(page) {
@@ -17,7 +17,7 @@
 			}
 			
 			var lastPage = "";
-			$hash.onexit("*", function(page, delayedcb) {
+			$url.onexit("*", function(page, delayedcb) {
 				var unsaved = document.getElementById("unsaved");
 				document.getElementById("status").innerHTML = "Closing page... " + getPageName(page);
 				lastPage = page;
@@ -38,7 +38,7 @@
 					}
 				}
 			});
-			$hash.onenter("*", function(page, delayedcb) {
+			$url.onenter("*", function(page, delayedcb) {
 				document.getElementById("status").innerHTML = "Entering page... " + getPageName(page);
 				console.log("enter [2] -> \"" + getPageName(page) + "\"");
 				var unsaved = "";
@@ -50,10 +50,10 @@
 				document.getElementById("content").style.margin = "1em";
 				document.getElementById("content").style.background = "lightgreen";
 			});
-			$hash.onready("*", function(page, delayedcb) {
+			$url.onready("*", function(page, delayedcb) {
 				console.log("lastPage = [", lastPage, "]");
 				console.log("page = [", page, "]");
-				document.getElementById("status").innerHTML = "Page ready.<br>Current section <a href=\"javascript:$hash.replace('#" + page + "')\">" + getPageName(page) + "</a>.<br>Previous visited section <a href=\"javascript:$hash.replace('#" + lastPage + "')\">" + getPageName(lastPage) + "</a>.";
+				document.getElementById("status").innerHTML = "Page ready.<br>Current section <a href=\"javascript:$url.replace('#" + page + "')\">" + getPageName(page) + "</a>.<br>Previous visited section <a href=\"javascript:$url.replace('#" + lastPage + "')\">" + getPageName(lastPage) + "</a>.";
 				console.log("ready [3] -> \"" + getPageName(page) + "\"");
 			});
 		
@@ -61,24 +61,24 @@
 			
 			setInterval(function() {
 				var test = document.getElementById("test");
-				if (test) test.innerHTML = JSON.stringify($hash.status());
+				if (test) test.innerHTML = JSON.stringify($url.status());
 			}, 333);
 			
 		//--></script>
 	</head>
 	<body>
 		<div id="navmenu1">
-			<a href="javascript:$hash.back()">&lt;</a> | 
-			<a href="javascript:$hash.go('#')">Home</a> | 
-			<a href="javascript:$hash.go('#products')">Products</a> | 
-			<a href="javascript:$hash.go('#contact')">Contact</a>
+			<a href="javascript:$url.back()">&lt;</a> | 
+			<a href="javascript:$url.go('#')">Home</a> | 
+			<a href="javascript:$url.go('#products')">Products</a> | 
+			<a href="javascript:$url.go('#contact')">Contact</a>
 			(go)
 		</div>
 		<div id="navmenu2">
-			<a href="javascript:$hash.back()">&lt;</a> | 
-			<a href="javascript:$hash.replace('#')">Home</a> | 
-			<a href="javascript:$hash.replace('#products')">Products</a> | 
-			<a href="javascript:$hash.replace('#contact')">Contact</a>
+			<a href="javascript:$url.back()">&lt;</a> | 
+			<a href="javascript:$url.replace('#')">Home</a> | 
+			<a href="javascript:$url.replace('#products')">Products</a> | 
+			<a href="javascript:$url.replace('#contact')">Contact</a>
 			(replace)
 		</div>
 		<div id="navmenu3">
