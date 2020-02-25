@@ -1,28 +1,28 @@
-/// hashchange.js
-/// light-weight javascript library for managing and cancelling url pages hashchanges events
-/// @site http://iagofg.com/hashchange.js
+/// url.js
+/// light-weight javascript library for managing and cancelling urls, pages and hashchanges events
+/// @site http://iagofg.com/url.js
 /// @author info@iagofg.com
 /// @license LGPL2
 "use strict";
 (function() {
-	var HASHJS_DEBUG = true;
-	if (HASHJS_DEBUG) console.log("hash.js: libstatus init begin");
-	var HASHJS_EMULATION_MS = 333;
-	var HASHJS_WILDCARD = "*";
-	var HASHJS_WILDCARD_ONLY_IF_NOT_HANDLER = false;
-	var HASHJS_CANCEL_HISTORY_TRICK = true;
-	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY = 1;
-	var HASHJS_BEHAVIOUR_ONCANCEL_RETRY_WAIT_TIME = 333;
-	var HASHJS_BEHAVIOUR_ONCANCEL_RETURN = 2;
-	var HASHJS_BEHAVIOUR_CANNOT_DELAY = 3;
-	var HASHJS_ONBEFOREUNLOAD_RETURNVALUE = "Changes will be lost";
-	var HASHJS_ONBEFOREUNLOAD_RETURN = HASHJS_ONBEFOREUNLOAD_RETURNVALUE;
-	var HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION = 33;
-	var HASHJS_LAST_URLCHANGE_TYPE_NONE = 0;
-	var HASHJS_LAST_URLCHANGE_TYPE_GO = 1;
-	var HASHJS_LAST_URLCHANGE_TYPE_BACK = 2;
-	var HASHJS_LAST_URLCHANGE_TYPE_REPLACE = 3;
-	var $hash = {};
+	var URLJS_DEBUG = true;
+	if (URLJS_DEBUG) console.log("url.js: libstatus init begin");
+	var URLJS_EMULATION_MS = 333;
+	var URLJS_WILDCARD = "*";
+	var URLJS_WILDCARD_ONLY_IF_NOT_HANDLER = false;
+	var URLJS_CANCEL_HISTORY_TRICK = true;
+	var URLJS_BEHAVIOUR_ONCANCEL_RETRY = 1;
+	var URLJS_BEHAVIOUR_ONCANCEL_RETRY_WAIT_TIME = 333;
+	var URLJS_BEHAVIOUR_ONCANCEL_RETURN = 2;
+	var URLJS_BEHAVIOUR_CANNOT_DELAY = 3;
+	var URLJS_ONBEFOREUNLOAD_RETURNVALUE = "Changes will be lost";
+	var URLJS_ONBEFOREUNLOAD_RETURN = URLJS_ONBEFOREUNLOAD_RETURNVALUE;
+	var URLJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION = 33;
+	var URLJS_LAST_URLCHANGE_TYPE_NONE = 0;
+	var URLJS_LAST_URLCHANGE_TYPE_GO = 1;
+	var URLJS_LAST_URLCHANGE_TYPE_BACK = 2;
+	var URLJS_LAST_URLCHANGE_TYPE_REPLACE = 3;
+	var $url = {};
 	var _exit_handlers = {};
 	var _enter_handlers = {};
 	var _ready_handlers = {};
@@ -30,7 +30,7 @@
 	var _cancel_urlchange_url = null;
 	var _cancel_urlchange_until = 0;
 	var _urlchange_timestamp = 0;
-	var _urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_NONE;
+	var _urlchange_type = URLJS_LAST_URLCHANGE_TYPE_NONE;
 	var _previous_history_length = 0;
 	var _update_previous_history_length = true;
 	var _nonull_previous_hash = null; // finally this seems redudant as long as _previous_hash is not set to null
@@ -47,7 +47,7 @@
 			previous_history_len: _previous_history_length,
 		};
 	}
-	$hash.status = status;
+	$url.status = status;
 	
 	function _add_handler(handlers, hash, callback) {
 		if (!(hash in handlers)) {
@@ -59,33 +59,33 @@
 	function onexit(hash, callback) {
 		return _add_handler(_exit_handlers, hash, callback);
 	}
-	$hash.onexit = onexit;
+	$url.onexit = onexit;
 
 	function onenter(hash, callback) {
 		return _add_handler(_enter_handlers, hash, callback);
 	}
-	$hash.onenter = onenter;
+	$url.onenter = onenter;
 
 	function onready(hash, callback) {
 		return _add_handler(_ready_handlers, hash, callback);
 	}
-	$hash.onready = onready;
+	$url.onready = onready;
 	
 	function go(url) {
 		console.log("go(", url, ")");
 		window.location = url;
 		_urlchange_timestamp = new Date().getTime();
-		_urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_GO;
+		_urlchange_type = URLJS_LAST_URLCHANGE_TYPE_GO;
 	}
-	$hash.go = go;
+	$url.go = go;
 
 	function back(ammount) {
 		console.log("back(", ammount, ")");
 		window.history.back(ammount);
 		_urlchange_timestamp = new Date().getTime();
-		_urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_BACK;
+		_urlchange_type = URLJS_LAST_URLCHANGE_TYPE_BACK;
 	}
-	$hash.back = back;
+	$url.back = back;
 
 	function replace(url) {
 		console.log("replace(", url, ")");
@@ -98,32 +98,32 @@
 			go(url);
 		}
 		_urlchange_timestamp = new Date().getTime();
-		_urlchange_type = HASHJS_LAST_URLCHANGE_TYPE_REPLACE;
+		_urlchange_type = URLJS_LAST_URLCHANGE_TYPE_REPLACE;
 	}
-	$hash.replace = replace;
+	$url.replace = replace;
 
 	function _cancel_urlchange() {
 		console.log("_cancel_urlchange [1]");
 		var timestamp = new Date().getTime();
 		if (timestamp > _cancel_urlchange_until) { // only one cancelation can be executed at once
 			console.log("_cancel_urlchange [2]");
-			if (_urlchange_timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION > timestamp) { // url change done with go/back/replace methods
-				_cancel_urlchange_until = timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION;
+			if (_urlchange_timestamp + URLJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION > timestamp) { // url change done with go/back/replace methods
+				_cancel_urlchange_until = timestamp + URLJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION;
 				console.log("_cancel_urlchange [3] (" + _urlchange_type + ")");
 				switch (_urlchange_type) {
-				case HASHJS_LAST_URLCHANGE_TYPE_GO:
+				case URLJS_LAST_URLCHANGE_TYPE_GO:
 					back(-1);
 					_cancel_urlchange_url = _nonull_previous_hash;
 					break;
-				case HASHJS_LAST_URLCHANGE_TYPE_BACK:
+				case URLJS_LAST_URLCHANGE_TYPE_BACK:
 					if (_nonull_previous_hash != null) go(_cancel_urlchange_url = _nonull_previous_hash);
 					break;
-				case HASHJS_LAST_URLCHANGE_TYPE_REPLACE:
+				case URLJS_LAST_URLCHANGE_TYPE_REPLACE:
 					if (_nonull_previous_hash != null) replace(_cancel_urlchange_url = _nonull_previous_hash);
 					break;
 				}
 			} else { // url change done with a href or browser/device button
-				_cancel_urlchange_until = timestamp + HASHJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION;
+				_cancel_urlchange_until = timestamp + URLJS_LAST_URLCHANGE_MAX_LAPSE_DETECTION;
 				var history_len = _get_history_len();
 				console.log("history_len", history_len, "; _previous_history_length", _previous_history_length);
 				
@@ -132,7 +132,7 @@
 					console.log("~~~~~~~~~ _cancel_urlchange [2 A ]");
 					back(-1);
 					if (_nonull_previous_hash != null) replace(_cancel_urlchange_url = _nonull_previous_hash);
-					if (HASHJS_CANCEL_HISTORY_TRICK) {
+					if (URLJS_CANCEL_HISTORY_TRICK) {
 						go(_nonull_previous_hash);
 						back(-1);
 					}
@@ -180,7 +180,7 @@
 		if (typeof handler == "function") {
 			var allowed_delayed_call_handler = true;
 			var local_delayed_call_handler = null;
-			if (behaviour !== HASHJS_BEHAVIOUR_CANNOT_DELAY) {
+			if (behaviour !== URLJS_BEHAVIOUR_CANNOT_DELAY) {
 				local_delayed_call_handler = function(retv) { // this 
 					if (allowed_delayed_call_handler) {
 						allowed_delayed_call_handler = false; // cb can be only called 1 time
@@ -190,7 +190,7 @@
 				}
 			}
 			var retv = handler(hash, local_delayed_call_handler);
-			if (behaviour !== HASHJS_BEHAVIOUR_CANNOT_DELAY && retv === local_delayed_call_handler) {
+			if (behaviour !== URLJS_BEHAVIOUR_CANNOT_DELAY && retv === local_delayed_call_handler) {
 				// do nothing, wait for local_delayed_call_handler call, if invoker does not call local_delayed_call_handler then process will not continue for this jump
 			} else { // retv === true || false
 				//console.log("_call_handler non delayed cb, allowed_delayed_call_handler = ", allowed_delayed_call_handler);
@@ -208,11 +208,11 @@
 			if (i < handlers[hash].length) {
 				_call_handler(handlers[hash][i], hash, behaviour, function(retv) {
 					if (retv === false) {
-						if (behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETRY) {
+						if (behaviour === URLJS_BEHAVIOUR_ONCANCEL_RETRY) {
 							setTimeout(function() {
 								_call_handlers(handlers, hash, i, behaviour, cb);
-							}, HASHJS_BEHAVIOUR_ONCANCEL_RETRY_TIME);
-						} else { // behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETURN || HASHJS_BEHAVIOUR_CANNOT_DELAY
+							}, URLJS_BEHAVIOUR_ONCANCEL_RETRY_TIME);
+						} else { // behaviour === URLJS_BEHAVIOUR_ONCANCEL_RETURN || URLJS_BEHAVIOUR_CANNOT_DELAY
 							if (typeof cb == "function") cb(false, hash);
 						}
 					} else {
@@ -220,7 +220,7 @@
 					}
 				});
 			} else {
-				if (HASHJS_WILDCARD_ONLY_IF_NOT_HANDLER) {
+				if (URLJS_WILDCARD_ONLY_IF_NOT_HANDLER) {
 					if (typeof cb == "function") cb(true, hash);
 				} else {
 					_call_handlers_step2(handlers, hash, 0, behaviour, cb);
@@ -231,15 +231,15 @@
 		}
 	}
 	function _call_handlers_step2(handlers, hash, i, behaviour, cb) {
-		if (HASHJS_WILDCARD in handlers) {
-			if (i < handlers[HASHJS_WILDCARD].length) {
-				_call_handler(handlers[HASHJS_WILDCARD][i], hash, behaviour, function(retv) {
+		if (URLJS_WILDCARD in handlers) {
+			if (i < handlers[URLJS_WILDCARD].length) {
+				_call_handler(handlers[URLJS_WILDCARD][i], hash, behaviour, function(retv) {
 					if (retv === false) {
-						if (behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETRY) {
+						if (behaviour === URLJS_BEHAVIOUR_ONCANCEL_RETRY) {
 							setTimeout(function() {
 								_call_handlers(handlers, hash, i, behaviour, cb);
-							}, HASHJS_BEHAVIOUR_ONCANCEL_RETRY_TIME);
-						} else { // behaviour === HASHJS_BEHAVIOUR_ONCANCEL_RETURN || HASHJS_BEHAVIOUR_CANNOT_DELAY
+							}, URLJS_BEHAVIOUR_ONCANCEL_RETRY_TIME);
+						} else { // behaviour === URLJS_BEHAVIOUR_ONCANCEL_RETURN || URLJS_BEHAVIOUR_CANNOT_DELAY
 							if (typeof cb == "function") cb(false, hash);
 						}
 					} else {
@@ -260,7 +260,7 @@
 	function _change_hash(previous_hash, next_hash, cb) {
 		var next_filtered_hash = _filter_hash(next_hash);
 		if (_previous_hash !== null) {
-			_call_handlers(_exit_handlers, _filter_hash(_previous_hash), 0, HASHJS_BEHAVIOUR_ONCANCEL_RETURN, function(retv, previous_filtered_hash) {
+			_call_handlers(_exit_handlers, _filter_hash(_previous_hash), 0, URLJS_BEHAVIOUR_ONCANCEL_RETURN, function(retv, previous_filtered_hash) {
 				if (retv === false) {
 					if (typeof cb == "function") cb(retv, previous_filtered_hash, next_filtered_hash);
 				} else {
@@ -272,12 +272,12 @@
 		}
 	}
 	function _change_hash_step2(previous_filtered_hash, next_filtered_hash, cb) {
-		_call_handlers(_enter_handlers, next_filtered_hash, 0, HASHJS_BEHAVIOUR_ONCANCEL_RETURN, function(retv, next_filtered_hash) {
+		_call_handlers(_enter_handlers, next_filtered_hash, 0, URLJS_BEHAVIOUR_ONCANCEL_RETURN, function(retv, next_filtered_hash) {
 			//console.log("_change_hash_step2", retv);
 			if (retv === false) {
 				if (typeof cb == "function") cb(retv, previous_filtered_hash, next_filtered_hash);
 			} else {
-				_call_handlers(_ready_handlers, next_filtered_hash, 0, HASHJS_BEHAVIOUR_ONCANCEL_RETRY, function(retv, next_filtered_hash) {
+				_call_handlers(_ready_handlers, next_filtered_hash, 0, URLJS_BEHAVIOUR_ONCANCEL_RETRY, function(retv, next_filtered_hash) {
 					//console.log("_change_hash_step2", retv);
 					if (typeof cb == "function") cb(retv, previous_filtered_hash, next_filtered_hash);
 				});
@@ -293,15 +293,15 @@
 		var askforconfirmation = false;
 		//console.log("onbeforeunload _previous_hash = ", _previous_hash);
 		if (_previous_hash !== null) {
-			_call_handlers(_exit_handlers, _filter_hash(_previous_hash), 0, HASHJS_BEHAVIOUR_CANNOT_DELAY, function(retv, previous_filtered_hash) {
+			_call_handlers(_exit_handlers, _filter_hash(_previous_hash), 0, URLJS_BEHAVIOUR_CANNOT_DELAY, function(retv, previous_filtered_hash) {
 				if (retv === false) {
 					askforconfirmation = true;
 				}
 			});
 		}
 		if (askforconfirmation) {
-			e['returnValue'] = HASHJS_ONBEFOREUNLOAD_RETURNVALUE;
-			return HASHJS_ONBEFOREUNLOAD_RETURN;
+			e['returnValue'] = URLJS_ONBEFOREUNLOAD_RETURNVALUE;
+			return URLJS_ONBEFOREUNLOAD_RETURN;
 		} else {
 			delete e['returnValue'];
 		}
@@ -334,7 +334,7 @@
 	window.addEventListener("beforeunload", onbeforeunload);
 	//window.addEventListener("unload", onunload);
 	window.addEventListener("hashchange", onhashchange);
-	_emuinterval = setInterval(emu_onhashchange, HASHJS_EMULATION_MS);
-	window.$hash = $hash;
-	if (HASHJS_DEBUG) console.log("hash.js: libstatus init done");
+	_emuinterval = setInterval(emu_onhashchange, URLJS_EMULATION_MS);
+	window.$url = $url;
+	if (URLJS_DEBUG) console.log("url.js: libstatus init done");
 })();
