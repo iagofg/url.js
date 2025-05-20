@@ -1,9 +1,11 @@
 # url.js
 a minimalistic light-weight javascript library for managing url and hash changes events for mono-page (or multi-page) apps that works well with the browser history and back button retrocompatible with fallback code.
 
+Here is a very simple example with a web app with 3 sections: home, products and contact made with url.js:
+
 ```javascript
      $html({default: $id("contents")}); // $html defaults to <div id="contents">...</div>
-     $html($id("menu"), "<a href='#'>Home</a> | <a href='#products'>Products</a> | <a href='#contact'>Contact</a>");
+     $html($id("menu"), "<a href='#'>🏠</a> | <a href='#products'>🛒</a> | <a href='#contact'>📩</a>");
 
      $url.onenter(['', 'home'], () => { // #home is also '' (default section)
        $html("This is home section.");
@@ -13,7 +15,7 @@ a minimalistic light-weight javascript library for managing url and hash changes
        $html("Products section. <input type='checkbox' id='unsaved' checked> Unsaved changes");
      });
      $url.onready('products', () => {
-       // products section was rendered, finish here some loadings/calculations if necessary...
+       // use onready to perform some task once the section DOM is completely ready, if necessary...
      });
      $url.onexit('products', () => {
        if ($id("unsaved").checked) return false; // if products are not saved avoid page change
