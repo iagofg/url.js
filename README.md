@@ -1,6 +1,21 @@
 # url.js
 light-weight javascript library for managing url and hash changes events for mono-page (or multi-page) apps.
 
+```javascript
+     $url.onenter(['', 'home'], () => { // default '' page
+       $html("This is home section.");
+     });
+     $url.onenter('products', () => {
+       $html("Products section. <input type='checkbox' id='unsaved' checked> Unsaved changes");
+     });
+     $url.onexit('products', () => {
+       if ($id("unsaved").checked) return false; // if products are not saved avoid page change
+     });
+     $url.onenter('contact', () => {
+       $html("Contact form.");
+     });
+```
+
 ## Usage
 
 Once loaded url.js file you can use following API calls:
