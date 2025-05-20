@@ -1,5 +1,5 @@
 # url.js
-a minimalistic light-weight javascript library for managing url and hash changes events for mono-page (or multi-page) apps that works well with the browser history and back button.
+a minimalistic light-weight javascript library for managing url and hash changes events for mono-page (or multi-page) apps that works well with the browser history and back button retrocompatible with fallback code.
 
 ```javascript
      $html({default: $id("contents")}); // $html defaults to <div id="contents">...</div>
@@ -23,26 +23,27 @@ a minimalistic light-weight javascript library for managing url and hash changes
        $html("Contact form.");
      });
 ```
+(this example uses expresions from https://github.com/iagofg/on.js library)
 
 ## Usage
 
 Once loaded url.js file you can use following API calls:
 
-### $url.onexit(hash, listener)
-
-Setup a event listener which will be called whenever another hash has been pushed into the url, before any onenter or onready listener is called (this event usually means that screen is going to change and asks you if you want to cancel this change, for example if there are unsaved changes on current page). Also will be called if the page is unloading, for example the beforeunload or unload browser events were detected.
-
-Parameters:
- * _hash_ the hash for which the listener will be called, or "\*" if listener must be called always, whichever the hash value.
- * _listener_ a function which will be called when the hash is detected.
- 
 ### $url.onenter(hash, listener)
 
-Setup a event listener which will be called whenever a new hash is pushed into the url. Parameters and listener use the same format than $url.onexit.
+Setup a event listener which will be called whenever a new/different hash is pushed into the url. Parameters and listener use the same format than $url.onexit.
 
+   Parameters:
+   * _hash_ the hash for which the listener will be called, an array of hashes, or "\*" if this listener must be called whichever the hash value.
+   * _listener_ a function which will be called when the hash is detected. You can use named, unnamed or lambda syntax.
+ 
 ### $url.onready(hash, listener)
 
 Setup a event listener which will be called whenever a new hash is pushed into the url and all the onenter callbacks has been called. Same parameters and listener than $url.onexit.
+
+### $url.onexit(hash, listener)
+
+Setup a event listener which will be called whenever another hash has been pushed into the url, before any onenter or onready listener is called (this event usually means that screen is going to change and asks you if you want to cancel this change, for example if there are unsaved changes on current page). Also will be called if the page is unloading, for example the beforeunload or unload browser events were detected.
 
 ### $url.go(url)
 
