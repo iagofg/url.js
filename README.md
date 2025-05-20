@@ -8,7 +8,7 @@ Here is a very simple example with a web app with 3 sections: home, products and
      $html($id("menu"), "<a href='#'>🏠</a> | <a href='#products'>🛒</a> | <a href='#contact'>📩</a>");
 
      $url.onenter(['', 'home'], () => { // #home is also '' (default section)
-       $html("This is home section.");
+       $html("Welcome, this is home section.");
      });
 
      $url.onenter('products', () => {
@@ -22,7 +22,7 @@ Here is a very simple example with a web app with 3 sections: home, products and
      });
 
      $url.onenter('contact', () => {
-       $html("Contact form.");
+       $fetch("./contact.html");
      });
 ```
 (this example uses expresions from https://github.com/iagofg/on.js library)
