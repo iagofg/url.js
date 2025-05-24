@@ -25,7 +25,7 @@ Here is a very simple example with a web app with 3 sections: home, products and
        $fetch("./contact.html");
      });
 ```
-(this example uses expresions from https://github.com/iagofg/on.js library)
+(this example uses expressions from https://github.com/iagofg/on.js library)
 
 ## Usage
 
@@ -49,11 +49,11 @@ Setup a event listener which will be called whenever another hash has been pushe
 
 ### $url.go(url)
 
-Navigate to the specified url. Whenever you can use this function as long as it reports the url.js core trazability about the navigation made. However of course you can use <a href="url">...</a>, form or window.location = url classic navigation methods.
+Navigate to the specified url. Whenever you can use this function as long as it reports the url.js core traceability about the navigation made. However of course you can use <a href="url">...</a>, form or window.location = url classic navigation methods.
 
 ### $url.back(delta)
 
-Equivalent to window.history.back, however it reports the url.js core trazability about the navigation made.
+Equivalent to window.history.back, however it reports the url.js core traceability about the navigation made.
 
 ### $url.replace(url)
 
@@ -62,7 +62,7 @@ Similar to $url.go, however it does not add a navigation history entry... it swa
 ### listener
 
 There are several calls ($url.onexit, $url.onenter and $url.onready) that use a listener. All the listener functions will receive the same following parameters:
- * _hash_ will be the hash for which the listener was invoked, usesful when the same listener is used for various or all the possible hash values.
+ * _hash_ will be the hash for which the listener was invoked, useful when the same listener is used for various or all the possible hash values.
  * _delayedcb_ will be a delayed return callback function. This argument will be null/undefined/false sometimes, when listener cannot delay the return value, for example if the events were triggered from beforeunload browser event.
 
 Listener will return always true|false reporting if the change is allowed or not. The value can be returned in two ways:
@@ -83,5 +83,5 @@ Listener will return always true|false reporting if the change is allowed or not
        ...
      }
 ```
-This will return true if cannot be delayed or will call to otherfunction and use it async returned value to feedback the return value asincronously to url.js calling to delayedcb.
+This will return true if cannot be delayed or will call to otherfunction and use it async returned value to feedback the return value asynchronously to url.js calling to delayedcb.
 
