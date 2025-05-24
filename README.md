@@ -4,7 +4,7 @@ a minimalistic light-weight javascript library for managing url and hash changes
 Here is a very simple example with a web app with 3 sections: home, products and contact made with url.js:
 
 ```javascript
-     $each([$html, $fetch], {default: $id("contents")}); // $html/$fetch defaults output to #contents
+     $each([$html, $fetch], {default: $id("contents")}); // $html/$fetch def outputs to #contents
      $html($id("menu"), "<a href='#'>🏠</a> <a href='#products'>🛒</a> <a href='#contact'>📩</a>");
 
      $url.onenter(['', 'home'], () => { // #home is also '' (default section)
