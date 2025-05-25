@@ -1,8 +1,7 @@
 /// url.js
 /// light-weight javascript library for managing and cancelling urls, pages and hashchanges events
-/// @site http://iagofg.com/url.js
-/// @author info@iagofg.com
-/// @license LGPL2
+/// @author info@iagoFG.com
+/// @license LGPL 2.1
 "use strict";
 (function() {
 	var URLJS_DEBUG = true;
