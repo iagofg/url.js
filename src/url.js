@@ -1,5 +1,4 @@
-/// url.js
-/// light-weight javascript library for managing and cancelling urls, pages and hashchanges events
+/// url.js: light-weight javascript library for managing and cancelling urls, pages and hashchanges events
 /// @author info@iagoFG.com
 /// @license LGPL 2.1
 "use strict";
