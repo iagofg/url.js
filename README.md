@@ -25,7 +25,7 @@ Here is a very simple example with a web app with 3 sections: home, products and
        $fetch("./contact.html");
      });
 ```
-(this example uses expressions from https://github.com/iagofg/on.js library)
+(this example uses expressions from https://github.com/iagoFG/alias.js library)
 
 ## Usage
 
