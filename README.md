@@ -5,7 +5,7 @@ Here is a very simple example with a web app with 3 sections: home, products and
 
 ```javascript
      $each([$html, $fetch], {default: $id("contents")}); // $html/$fetch def outputs to #contents
-     $html($id("menu"), "<a href='#'>🏠</a> <a href='#products'>🛒</a> <a href='#contact'>📩</a>");
+     $html("<a href='#'>🏠</a> <a href='#products'>🛒</a> <a href='#contact'>📩</a>", $id("menu"));
 
      $url.onenter(['', 'home'], () => { // #home is also '' (default section)
        $html("Welcome, this is home section.");
